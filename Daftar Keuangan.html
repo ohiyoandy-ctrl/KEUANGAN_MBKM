@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Data Setoran Anggota</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f6f9;
+      padding: 20px;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .header img {
+      width: 50px;
+      height: 50px;
+      object-fit: contain;
+    }
+
+    .header h1 {
+      color: #2c3e50;
+      margin: 0;
+      font-size: 24px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #ffffff;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+    }
+
+    th, td {
+      padding: 12px;
+      border: 1px solid #ddd;
+      text-align: center;
+    }
+
+    th {
+      background-color: #3498db;
+      color: white;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    .actions button {
+      margin: 0 4px;
+      cursor: pointer;
+      border: none;
+      background: none;
+    }
+
+    .actions button.edit {
+      color: #f39c12;
+    }
+
+    .actions button.delete {
+      color: #e74c3c;
+    }
+
+    .form-container {
+      margin-bottom: 20px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    input[type="text"], input[type="number"] {
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      flex: 1;
+    }
+
+    button {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 4px;
+      background-color: #2ecc71;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #27ae60;
+    }
+
+    .download-btn {
+      background-color: #9b59b6;
+      margin-top: 10px;
+    }
+
+    .download-btn:hover {
+      background-color: #8e44ad;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <img id="logo" src="amik.png" alt="Logo" />
+    <h1>📋 Data Setoran Anggota</h1>
+  </div>
+
+  <div class="form-container">
+    <input type="text" id="nama" placeholder="Nama Anggota" />
+    <input type="number" id="jumlah" placeholder="Jumlah Uang Setor" />
+    <button onclick="tambahData()">Tambah</button>
+  </div>
+
+  <table id="tabelAnggota">
+    <thead>
+      <tr>
+        <th>No</th>
+        <th>Nama</th>
+        <th>Jumlah Uang Setor</th>
+        <th>Aksi</th>
+      </tr>
+    </thead>
+    <tbody id="tabelBody">
+      <!-- Data awal -->
+      <tr>
+        <td>1</td>
+        <td>Dwi</td>
+        <td>0</td>
+        <td class="actions">
+          <button class="edit" onclick="editRow(this)">✏️</button>
+          <button class="delete" onclick="hapusRow(this)">🗑️</button>
+        </td>
+      </tr>
+      <!-- ... Data lainnya ... -->
+    </tbody>
+  </table>
+
+  <button class="download-btn" onclick="downloadExcel()">⬇️ Download Excel</button>
+
+  <!-- SheetJS CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <script>
+    function tambahData() {
+      const nama = document.getElementById("nama").value.trim();
+      const jumlah = document.getElementById("jumlah").value.trim();
+      if (nama === "" || jumlah === "") {
+        alert("Nama dan jumlah tidak boleh kosong.");
+        return;
+      }
+
+      const tbody = document.getElementById("tabelBody");
+      const barisBaru = document.createElement("tr");
+      const nomor = tbody.rows.length + 1;
+
+      barisBaru.innerHTML = `
+        <td>${nomor}</td>
+        <td>${nama}</td>
+        <td>${jumlah}</td>
+        <td class="actions">
+          <button class="edit" onclick="editRow(this)">✏️</button>
+          <button class="delete" onclick="hapusRow(this)">🗑️</button>
+        </td>
+      `;
+      tbody.appendChild(barisBaru);
+
+      document.getElementById("nama").value = "";
+      document.getElementById("jumlah").value = "";
+    }
+
+    function hapusRow(btn) {
+      if (confirm("Yakin ingin menghapus data ini?")) {
+        const row = btn.closest("tr");
+        row.remove();
+        updateNomor();
+      }
+    }
+
+    function editRow(btn) {
+      const row = btn.closest("tr");
+      const namaCell = row.children[1];
+      const jumlahCell = row.children[2];
+
+      const namaBaru = prompt("Edit Nama:", namaCell.textContent);
+      const jumlahBaru = prompt("Edit Jumlah Uang Setor:", jumlahCell.textContent);
+
+      if (namaBaru !== null && jumlahBaru !== null) {
+        namaCell.textContent = namaBaru;
+        jumlahCell.textContent = jumlahBaru;
+      }
+    }
+
+    function updateNomor() {
+      const rows = document.querySelectorAll("#tabelBody tr");
+      rows.forEach((row, index) => {
+        row.children[0].textContent = index + 1;
+      });
+    }
+
+    function downloadExcel() {
+      const wb = XLSX.utils.book_new();
+      const table = document.getElementById("tabelAnggota");
+      const ws = XLSX.utils.table_to_sheet(table);
+      XLSX.utils.book_append_sheet(wb, ws, "DataAnggota");
+      XLSX.writeFile(wb, "data_setoran_anggota.xlsx");
+    }
+  </script>
+
+</body>
+</html>
